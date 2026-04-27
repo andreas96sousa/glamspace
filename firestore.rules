@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Negócios: Leitura pública, Escrita apenas pelo dono
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth != null;
+    }
+    
+    // Equipe: Leitura pública, Escrita apenas pelo dono do salão
+    match /staff/{staffId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/businesses/$(request.resource.data.businessId)).data.ownerId == request.auth.uid;
+    }
+    
+    // Agendamentos: 
+    // - Cliente pode criar se estiver logado
+    // - Cliente pode ler seus próprios agendamentos
+    // - Admin pode ler e atualizar agendamentos do seu salão
+    match /appointments/{appointmentId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId || 
+        get(/databases/$(database)/documents/businesses/$(resource.data.businessId)).data.ownerId == request.auth.uid
+      );
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/businesses/$(resource.data.businessId)).data.ownerId == request.auth.uid
+      );
+    }
+  }
+}
