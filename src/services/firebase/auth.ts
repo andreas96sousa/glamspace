@@ -11,6 +11,11 @@ export const authService = {
     return await signInWithEmailAndPassword(auth, email, pass);
   },
 
+  async login(email: string, pass: string) {
+    if (!auth) throw new Error("Auth not initialized");
+    return await signInWithEmailAndPassword(auth, email, pass);
+  },
+
   async registerAdmin(email: string, pass: string) {
     if (!auth) throw new Error("Auth not initialized");
     return await createUserWithEmailAndPassword(auth, email, pass);
