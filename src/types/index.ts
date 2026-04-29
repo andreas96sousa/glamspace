@@ -7,6 +7,10 @@ export interface Business {
   address: string;
   city: string;
   ownerId: string;
+  ownerName?: string;
+  ownerPhone?: string;
+  plan?: "free" | "premium" | "pro";
+  expiresAt?: string; // Data ISO
   services: Service[];
   imageUrl?: string;
 }
