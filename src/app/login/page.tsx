@@ -15,14 +15,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"client" | "admin">("client");
   const router = useRouter();
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await authService.loginAdmin(email, password);
-      router.push("/admin/dashboard");
+      if (activeTab === "admin") {
+        await authService.loginAdmin(email, password);
+        router.push("/admin/dashboard");
+      } else {
+        await authService.login(email, password);
+        router.push("/dashboard");
+      }
     } catch (error) {
       alert("Erro ao entrar. Verifique suas credenciais.");
     } finally {
@@ -69,30 +75,50 @@ export default function LoginPage() {
             {/* Tabs content... simplified for neon look */}
             <div className="space-y-6">
                <div className="grid grid-cols-2 p-1 bg-white/5 rounded-xl gap-1">
-                  <button className="py-2 text-sm font-bold rounded-lg bg-cyan-500 text-slate-950">Cliente</button>
-                  <button className="py-2 text-sm font-bold rounded-lg text-slate-400 hover:text-white transition-colors">Admin</button>
+                  <button 
+                    onClick={() => setActiveTab("client")}
+                    className={`py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "client" ? "bg-cyan-500 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                  >
+                    Cliente
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab("admin")}
+                    className={`py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "admin" ? "bg-cyan-500 text-slate-950" : "text-slate-400 hover:text-white"}`}
+                  >
+                    Admin
+                  </button>
                </div>
 
                <div className="space-y-4">
-                 <Button 
-                    variant="outline" 
-                    className="w-full h-14 rounded-2xl border-white/10 hover:bg-white/5 gap-3 font-bold text-lg transition-all active:scale-95" 
-                    onClick={handleGoogleLogin}
-                    disabled={isLoading}
-                  >
-                    <LogIn className="w-5 h-5 text-cyan-400" />
-                    Entrar com Google
-                  </Button>
-                  
-                  <div className="relative py-4">
-                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-4 text-slate-500 font-bold tracking-widest leading-none">Acesso Restrito</span></div>
-                  </div>
+                  {activeTab === "client" && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-14 rounded-2xl border-white/10 hover:bg-white/5 gap-3 font-bold text-lg transition-all active:scale-95" 
+                        onClick={handleGoogleLogin}
+                        disabled={isLoading}
+                      >
+                        <LogIn className="w-5 h-5 text-cyan-400" />
+                        Entrar com Google
+                      </Button>
+                      
+                      <div className="relative py-4">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
+                        <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-4 text-slate-500 font-bold tracking-widest leading-none">Ou</span></div>
+                      </div>
+                    </>
+                  )}
+                  {activeTab === "admin" && (
+                    <div className="relative py-4">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
+                      <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-4 text-slate-500 font-bold tracking-widest leading-none">Acesso Restrito</span></div>
+                    </div>
+                  )}
 
-                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <Input 
                       type="email" 
-                      placeholder="E-mail Administrativo" 
+                      placeholder={activeTab === "admin" ? "E-mail Administrativo" : "E-mail"}
                       className="h-14 rounded-2xl bg-white/5 border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/20 text-lg"
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)}
