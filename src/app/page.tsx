@@ -16,11 +16,53 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { useState } from "react";
 
 export default function HomePage() {
   const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleCheckout = async (planName: string, priceId: string) => {
+    try {
+      setLoadingPlan(planName);
+      
+      const user = auth?.currentUser;
+      if (!user) {
+        router.push("/login?redirect=pricing");
+        return;
+      }
+
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priceId,
+          planName,
+          userId: user.uid,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Erro ao criar sessão de checkout:", data.error);
+        alert("Ocorreu um erro ao iniciar o checkout. Verifique se as chaves do Stripe estão configuradas.");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Erro na conexão com o servidor.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-cyan-500/30 overflow-x-hidden">
@@ -288,8 +330,17 @@ export default function HomePage() {
                   <PricingItem text="Painel Administrativo Mobile-First" />
                 </ul>
 
-                <Button variant="outline" className="w-full h-14 rounded-2xl border-white/10 hover:bg-white/5 font-bold text-lg">
-                  Começar com Starter
+                <Button 
+                  variant="outline" 
+                  className="w-full h-14 rounded-2xl border-white/10 hover:bg-white/5 font-bold text-lg"
+                  disabled={loadingPlan !== null}
+                  onClick={() => handleCheckout("Starter", "price_1StarterPlaceholder")}
+                >
+                  {loadingPlan === "Starter" ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Começar com Starter"
+                  )}
                 </Button>
               </motion.div>
 
@@ -319,8 +370,16 @@ export default function HomePage() {
                   <PricingItem text="Suporte prioritário via WhatsApp" bold />
                 </ul>
 
-                <Button className="w-full h-14 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-                  Quero o Plano Pro
+                <Button 
+                  className="w-full h-14 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                  disabled={loadingPlan !== null}
+                  onClick={() => handleCheckout("Pro", "price_1ProPlaceholder")}
+                >
+                  {loadingPlan === "Pro" ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Quero o Plano Pro"
+                  )}
                 </Button>
               </motion.div>
             </div>
